@@ -20,6 +20,9 @@ mysql = MySQL(app)
 # Registration route
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    if "loggedin" in session:
+        return render_template('home.html')
+
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
@@ -51,6 +54,9 @@ def register():
 # Login route
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if "loggedin" in session:
+        return render_template('home.html')
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
