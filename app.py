@@ -102,9 +102,60 @@ def profile():
         return render_template('profile.html', username=session['username'])
     return redirect(url_for('login'))
 
-@app.route('/admin/menus')
+# @app.route('/admin/menus')
+# def manage_menus():
+#     if 'loggedin' in session:
+#         # fetch all menus and submenus
+#         menus = get_menus()
+#         return render_template('manage_menus.html', menus=menus)
+#     return redirect(url_for('login'))
+
+@app.route('/admin/menus', methods=['GET', 'POST'])
 def manage_menus():
     if 'loggedin' in session:
+        if request.method == 'POST':
+            # Handle form submissions
+            action = request.form.get('action')
+            if action == 'add':
+                # Add a new menu or submenu
+                name = request.form['name']
+                link = request.form['link']
+                description = request.form['description']
+                parent_id = request.form['parent_id'] if request.form['parent_id'] else None
+
+                cursor = mysql.connection.cursor()
+                cursor.execute(
+                    'INSERT INTO menus (name, link, description, parent_id) VALUES (%s, %s, %s, %s)',
+                    (name, link, description, parent_id)
+                )
+                mysql.connection.commit()
+                flash('Menu added successfully!', 'success')
+
+            elif action == 'edit':
+                # Edit an existing menu or submenu
+                menu_id = request.form['id']
+                name = request.form['name']
+                link = request.form['link']
+                description = request.form['description']
+
+                cursor = mysql.connection.cursor()
+                cursor.execute(
+                    'UPDATE menus SET name = %s, link = %s, description = %s WHERE id = %s',
+                    (name, link, description, menu_id)
+                )
+                mysql.connection.commit()
+                flash('Menu updated successfully!', 'success')
+
+            elif action == 'delete':
+                # Delete a menu or submenu
+                menu_id = request.form['id']
+
+                cursor = mysql.connection.cursor()
+                cursor.execute('DELETE FROM menus WHERE id = %s', (menu_id,))
+                mysql.connection.commit()
+                flash('Menu deleted successfully!', 'success')
+
+        # Fetch all menus and submenus
         menus = get_menus()
         return render_template('manage_menus.html', menus=menus)
     return redirect(url_for('login'))
