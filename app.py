@@ -84,7 +84,8 @@ def login():
 @app.route('/home')
 def home():
     if 'loggedin' in session:
-        return render_template('home.html', username=session['username'])
+        menus = get_menus()  # Fetch menus and submenus
+        return render_template('home.html', username=session['username'], menus=menus)
     return redirect(url_for('login'))
 
 # Logout route
@@ -94,6 +95,30 @@ def logout():
     session.pop('id', None)
     session.pop('username', None)
     return redirect(url_for('login'))
+
+@app.route('/settings/profile')
+def profile():
+    if 'loggedin' in session:
+        return render_template('profile.html', username=session['username'])
+    return redirect(url_for('login'))
+
+@app.route('/admin/menus')
+def manage_menus():
+    if 'loggedin' in session:
+        menus = get_menus()
+        return render_template('manage_menus.html', menus=menus)
+    return redirect(url_for('login'))
+
+def get_menus():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute('SELECT * FROM menus WHERE parent_id IS NULL')  # Fetch top-level menus
+    menus = cursor.fetchall()
+
+    for menu in menus:
+        cursor.execute('SELECT * FROM menus WHERE parent_id = %s', (menu['id'],))  # Fetch submenus
+        menu['submenus'] = cursor.fetchall()
+
+    return menus
 
 # Run the app
 if __name__ == '__main__':
